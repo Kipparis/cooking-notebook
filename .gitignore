@@ -1,3 +1,7 @@
+# TODO: препроцессор для ODT файла (возможно свой)
+generated/
+!generated/view.sh
+log/
 # python {{{
 # Byte-compiled / optimized / DLL files
 __pycache__/
