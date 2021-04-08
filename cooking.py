@@ -200,9 +200,12 @@ if __name__ == "__main__":
         print("exporting database contents")
         export_database()
 
+<<<<<<< HEAD
     if args.import_flag:
         print("importing database contents")
 
+=======
+>>>>>>> ea7f524 (add export possibility)
     if args.add:    # add recipe(s)
         MealType.output_choices()
         meal = input("select meal type or enter new: ")

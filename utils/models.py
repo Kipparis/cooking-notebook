@@ -1,11 +1,17 @@
 import os
 from peewee import *
+import pandas as pd
 
 db_fn     = "recipe.db"
 sqlite_db = SqliteDatabase(db_fn, pragmas=[('foreign_keys', 'on')])
 
 class BaseModel(Model):
     """A base model that will use our Sqlite database."""
+    @classmethod
+    def export_model(cls):
+        with open(f"{cls.__name__}.csv", "w") as fl:
+            pd.DataFrame(list(cls.select().dicts())).to_csv(fl, index=False)
+
     class Meta:
         database = sqlite_db
 
@@ -49,7 +55,7 @@ class Recipe(BaseModel):
             RecipeIngredient.create(recipe = recipe,
                                     ingredient = ingredient,
                                     quantity = quantity,          # see docstring
-                                    measure_units = measure_unit) # see ^^^^^^^^^
+                                    measure_unit = measure_unit)  # see ^^^^^^^^^
 
 
 class Ingredient(BaseModel):
@@ -73,8 +79,17 @@ class RecipeIngredient(BaseModel):
                               auto_round     = True)
     measure_unit = ForeignKeyField(MeasureUnit)
 
+tables = [Recipe, MealType, Ingredient, MeasureUnit, RecipeIngredient]
 
 def create_database(force = False):
     with sqlite_db:
         # create all tables above
-        sqlite_db.create_tables([Recipe, MealType, Ingredient, MeasureUnit, RecipeIngredient])
+        sqlite_db.create_tables(tables)
+
+def export_database():
+    """
+    this method uses base model .export_model function
+    """
+    # export tables
+    for table in tables:
+        table.export_model()
