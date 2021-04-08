@@ -59,15 +59,6 @@ parser.add_argument('-a', '--add',
                     action = "store_true",
                     help    = "add new recipe to db",
                     dest    = "add")
-<<<<<<< HEAD
-=======
-parser.add_argument('-r', '--recipe',
-                    default = None,
-                    type    = str,
-                    help    = "recipe filename to process (read from stdin if empty)",
-                    metavar = "RECIPE_FN",
-                    dest    = "recipe_fn")
->>>>>>> 02cb599 (more complicated recipe adding)
 parser.add_argument('-d', '--database',
                     default = "recipe.db",
                     type    = str,
@@ -205,7 +196,6 @@ if __name__ == "__main__":
     if args.do_concat_recipe:
         concat_recipe()
 
-<<<<<<< HEAD
     if args.export_flag:
         print("exporting database contents")
         export_database()
