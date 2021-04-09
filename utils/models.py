@@ -5,6 +5,8 @@ import pandas as pd
 db_fn     = "recipe.db"
 sqlite_db = SqliteDatabase(db_fn, pragmas=[('foreign_keys', 'on')])
 
+tables = []
+
 class BaseModel(Model):
     """A base model that will use our Sqlite database."""
     @classmethod
@@ -22,6 +24,8 @@ class MealType(BaseModel):
     def output_choices():
         for mtype in MealType.select():
             print(f"{mtype.id}. {mtype.name}")
+
+tables.append(MealType)
 
 class Recipe(BaseModel):
     id   = AutoField()
@@ -57,10 +61,14 @@ class Recipe(BaseModel):
                                     quantity = quantity,          # see docstring
                                     measure_unit = measure_unit)  # see ^^^^^^^^^
 
+tables.append(Recipe)
+
 
 class Ingredient(BaseModel):
     id   = AutoField()
     name = TextField()
+
+tables.append(Ingredient)
 
 class MeasureUnit(BaseModel):
     id   = AutoField()
@@ -69,6 +77,8 @@ class MeasureUnit(BaseModel):
     def output_choices():
         for unit in MeasureUnit.select():
             print(f"{unit.id}. {unit.name}")
+
+tables.append(MeasureUnit)
 
 class RecipeIngredient(BaseModel):
     id         = AutoField()
@@ -79,7 +89,8 @@ class RecipeIngredient(BaseModel):
                               auto_round     = True)
     measure_unit = ForeignKeyField(MeasureUnit)
 
-tables = [Recipe, MealType, Ingredient, MeasureUnit, RecipeIngredient]
+tables.append(RecipeIngredient)
+
 
 def create_database(force = False):
     with sqlite_db:
