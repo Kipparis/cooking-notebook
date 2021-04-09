@@ -266,6 +266,6 @@ if __name__ == "__main__":
                                 "ingr qty": entry.ri.quantity,
                                 "measure unit": entry.ri.measure_unit.name}
                             for entry in query])
-            print(df)
+            print(df.to_string(index=False))
         else:
             print("no recipes in the book")
