@@ -191,7 +191,8 @@ def concat_recipe():
 
 if __name__ == "__main__":
     # create database if it not exists
-    create_database()
+    # also it returns database instance and models
+    globals().update(create_database(args.db_fn))
 
     if args.do_concat_recipe:
         concat_recipe()
