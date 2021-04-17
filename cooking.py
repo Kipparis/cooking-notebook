@@ -40,11 +40,15 @@ parser.add_argument('--concat-recipe',
         help   = "whether program will all recipes in one list",
         dest   = "do_concat_recipe")
 parser.add_argument('--output-file',
-        default = "stdout",
-        metavar = "fl",
-        type    = str,
-        help    = "file to which recipes and buy list must be outputted",
-        dest    = "out_file")
+                    default = "stdout",
+                    metavar = "fl",
+                    type    = str,
+                    help    = "file to which recipes and buy list must be outputted",
+                    dest    = "out_file")
+parser.add_argument('--create-user',
+                    action = "store_true",
+                    help = "initiate user information to calculate nutrients",
+                    dest = "create_user")
 parser.add_argument('--working-dir',
         default = "generated",
         metavar = "DIR",
@@ -66,13 +70,13 @@ parser.add_argument('-d', '--database',
                     metavar = "DB_FN",
                     dest    = "db_fn")
 parser.add_argument('-e', '--export',
-                    action = "store_true",
+                    nargs='*',
                     help = "export database into several csv files (exported and imported files must have same versions)",
-                    dest = "export_flag")
+                    dest = "export_tables")
 parser.add_argument('-i', '--import',
-                    action = "store_true",
+                    nargs='*',
                     help = "import database from serveral csv files (exported and imported files must have same versions)",
-                    dest = "import_flag")
+                    dest = "import_tables")
 
 args = parser.parse_args()
 
@@ -190,19 +194,35 @@ def concat_recipe():
 
 
 if __name__ == "__main__":
+    ret_d, tables = create_database(args.db_fn)
     # create database if it not exists
     # also it returns database instance and models
-    globals().update(create_database(args.db_fn))
+    globals().update(ret_d)
 
     if args.do_concat_recipe:
         concat_recipe()
 
-    if args.export_flag:
-        print("exporting database contents")
-        export_database()
+    if args.export_tables is not None:
+        if len(args.export_tables) == 0:
+            print("exporting database contents")
+            export_database(tables)
+        else:
+            print("exporting specific tables is not implemented yet")
 
-    if args.import_flag:
-        print("importing database contents")
+    # if flag is presented
+    if args.import_tables is not None:
+        if len(args.import_tables) == 0:
+            print("importing all tables is not implemented yet")
+        else:
+            for table in args.import_tables:
+                # find table by name
+                for key, val in ret_d.items():
+                    if key.lower() == table.lower():
+                        # import values
+                        val.import_table()
+
+    if args.find_nutrients:
+        print("finding nutrients")
 
     if args.add:    # add recipe(s)
         MealType.output_choices()
@@ -269,3 +289,5 @@ if __name__ == "__main__":
             print(df.to_string(index=False))
         else:
             print("no recipes in the book")
+    if args.create_user:
+        print("creating user profile")
