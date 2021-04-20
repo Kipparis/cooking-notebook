@@ -12,6 +12,8 @@ from utils.nutrients import find_nutrients
 
 from utils import recipe
 
+from utils.settings import *
+
 # ========== Print to stderr ===========
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -82,6 +84,14 @@ parser.add_argument('-i', '--import',
                     nargs='*',
                     help = "import database from serveral csv files (exported and imported files must have same versions)",
                     dest = "import_tables")
+parser.add_argument('--recipes',
+                    nargs='*',
+                    help ='specify target recipes\' names (otherwise, when needed, you will be given interactive prompt)',
+                    dest = 'recipes')
+parser.add_argument('--aggregate-nutrients',
+                    action = 'store_true',
+                    help ='calculate summarized nutrients for passed recipes (and ingredients, for which we don\'t know nutrition)',
+                    dest ='aggregate_nutrients')
 
 args = parser.parse_args()
 
@@ -209,3 +219,60 @@ if __name__ == "__main__":
             print("no recipes in the book")
     if args.create_user:
         print("creating user profile")
+
+    if args.aggregate_nutrients:
+        print("aggregating nutrients")
+        names = args.recipes
+        if names is None or len(names) == 0:
+            print("interactive prompt is not implemented yet")
+        else:
+            ingredientMu = MeasureUnit.alias()  # create alias so we can
+            nutrientMu = MeasureUnit.alias()    # join this table twice
+            query = (Recipe
+                     .select(Recipe,
+                             RecipeIngredient, Ingredient, ingredientMu,
+                             IngredientNutrient, Nutrient, nutrientMu)
+                     .join(RecipeIngredient,   attr='ri')
+                     .join(Ingredient,         attr='ing')
+                     .join(IngredientNutrient, attr='inu')
+                     .join(Nutrient, attr='nu')
+                     .join_from(RecipeIngredient, ingredientMu, attr='mu')
+                     .join_from(IngredientNutrient, nutrientMu, attr='mu')
+                     .where(Recipe.name.in_(names)))
+            pd_dict = [{"id": entry.id,
+                        "recName": entry.name,
+                        "ingName": entry.ri.ing.name,
+                        "ingQty": entry.ri.quantity,
+                        "ingMu": entry.ri.mu.name,
+                        "nuName": entry.ri.ing.inu.nu.name,
+                        "nuQty": entry.ri.ing.inu.quantity,
+                        "nuMu (per 100 g)": entry.ri.ing.inu.mu.name}
+                       for entry in query]
+            df = pd.DataFrame(pd_dict).set_index('id')
+            print("\n", df, sep="")
+
+            print()
+            print("aggregated")
+            query = (Recipe
+                     .select(Recipe,
+                             RecipeIngredient, Ingredient, ingredientMu,
+                             fn.Sum(IngredientNutrient.quantity).alias('count'),
+                             IngredientNutrient, Nutrient, nutrientMu)
+                     .join(RecipeIngredient,   attr='ri')
+                     .join(Ingredient,         attr='ing')
+                     .join(IngredientNutrient, attr='inu')
+                     .join(Nutrient, attr='nu')
+                     .join_from(RecipeIngredient, ingredientMu, attr='mu')
+                     .join_from(IngredientNutrient, nutrientMu, attr='mu')
+                     .where(Recipe.name.in_(names))
+                     .group_by(Recipe.name, Nutrient.name, nutrientMu.name))
+            pd_dict = [{"id": entry.id,
+                        "recName": entry.name,
+                        "nuName": entry.ri.ing.inu.nu.name,
+                        "nuQty(per 100 g)": entry.count,
+                        "nuMu": entry.ri.ing.inu.mu.name}
+                       for entry in query]
+            pp.pprint(query[0].__dict__)
+            df = pd.DataFrame(pd_dict).set_index('id')
+            print("\n", df, sep="")
+
