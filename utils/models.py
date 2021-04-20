@@ -136,6 +136,24 @@ def create_database(db_fn, force = False):
 
     tables.append(Nutrient)
 
+    class IngredientNutrient(BaseModel):
+        id = AutoField()
+        ingredient   = ForeignKeyField(Ingredient)
+        nutrient     = ForeignKeyField(Nutrient)
+        # quantity usually stored per 100g
+        quantity     = DecimalField(max_digits = 10,
+                                    decimal_places = 4,
+                                    auto_round = True)
+        measure_unit = ForeignKeyField(MeasureUnit)
+
+        class Meta:
+                indexes = (
+                    # create a unique on ingredient/nutrient
+                    (('ingredient', 'nutrient'), True),
+                )
+
+    tables.append(IngredientNutrient)
+
     class UserNutrients(BaseModel):
         """
         IMPORTANT: it is not developed for people younger than 19
@@ -158,8 +176,7 @@ def create_database(db_fn, force = False):
             mg, created = MeasureUnit.get_or_create(name = "mg")    # will be used later
             mcg, created = MeasureUnit.get_or_create(name = "mcg")  # will be used later
 
-            calcium_underdose = "Osteoporosis (brittle bones) osteomalacia (soft bones), muscle spasms and cramping, rickets (a preventable bone disease in childhood)"
-            calcium, created = Nutrient.get_or_create(name = "calcium", underdose = calcium_underdose)
+            # calcium
             # calculate qty
             if user.age >= 19 and user.age <= 50:
                 quantity = 1000
@@ -169,9 +186,8 @@ def create_database(db_fn, force = False):
                 quantity = 1200
             else:
                 quantity = 1000
-            UserNutrients.create(user = user, nutrient = calcium, quantity = quantity, measure_unit = mg)
 
-            chloride, created = Nutrient.get_or_create(name = "chloride")
+            # chloride
             # calculate qty
             if user.age >= 19 and user.age <= 50:
                 quantity = 2300
@@ -179,31 +195,25 @@ def create_database(db_fn, force = False):
                 quantity = 2000
             else:
                 quantity = 1800
-            UserNutrients.create(user = user, nutrient = chloride, quantity = quantity, measure_unit = mg)
 
-            copper, created = Nutrient.get_or_create(name = "copper")
             quantity = 900
             UserNutrients.create(user = user, nutrient = copper, quantity = quantity, measure_unit = mcg)
 
-            fluoride, created = Nutrient.get_or_create(name = "fluoride")
             if user.sex_rounded == "male":
                 quantity = 4
+            # copper
             else:
                 quantity = 3
             UserNutrients.create(user = user, nutrient = fluoride, quantity = quantity, measure_unit = mg)
 
-            B9_underdose = "Tiredness and fatigue, problems with nerve functioning, poor growth, weight loss, folate-deficiency anaemia"
-            B9, created = Nutrient.get_or_create(name = "B9", underdose = B9_underdose)
-            quantity = 400
-            UserNutrients.create(user = user, nutrient = B9, quantity = quantity, measure_unit = mcg)
 
-            iodine_underdose = "The thyroid gland becomes enlarged (called goitre) and in the long term, hypothyroidism develops with symptoms including weight gain, hair loss, dry skin, fatigue and slowed reflexes."
-            iodine, created = Nutrient.get_or_create(name = "iodine", underdose = iodine_underdose)
             quantity = 150
             UserNutrients.create(user = user, nutrient = iodine, quantity = quantity, measure_unit = mcg)
+            # B9
+            B9_description = "Folic acid is crucial for proper brain function and plays an important role in mental and emotional health."
 
-            iron_underdose = "Tiredness and fatigue, shortness of breath, pale skin, poor memory, and decreased resistance to infection are the most common signs of iron deficiency anaemia."
-            iron, created = Nutrient.get_or_create(name = "iron", underdose = iron_underdose)
+            # iodine
+            # iron
             if user.sex_rounded == "male":
                 quantity = 8
             elif user.age >= 19 and user.age <= 50:
@@ -212,8 +222,7 @@ def create_database(db_fn, force = False):
                 quantity = 8
             UserNutrients.create(user = user, nutrient = iron, quantity = quantity, measure_unit = mg)
 
-            magnesium_underdose = "Tiredness and fatigue, muscle spasm and weakness, sleep disorders, irritability, agitation and anxiety"
-            magnesium, created = Nutrient.get_or_create(name = "magnesium", underdose = magnesium_underdose)
+            # magnesium
             if user.sex_rounded == "male":
                 if user.age >= 19 and user.age <= 30:
                     quantity = 400
@@ -226,38 +235,30 @@ def create_database(db_fn, force = False):
                     quantity = 320
             UserNutrients.create(user = user, nutrient = magnesium, quantity = quantity, measure_unit = mg)
 
-            manganese, created = Nutrient.get_or_create(name = "manganese")
+            # manganese
             if user.sex_rounded == "male":
                 quantity = 2.3
             else:
                 quantity = 1.8
             UserNutrients.create(user = user, nutrient = manganese, quantity = quantity, measure_unit = mg)
 
-            molybdenum, created = Nutrient.get_or_create(name = "molybdenum")
-            quantity = 45
-            UserNutrients.create(user = user, nutrient = molybdenum, quantity = quantity, measure_unit = mcg)
+            # molybdenum
 
-            nickel, created = Nutrient.get_or_create(name = "nickel")
-            quantity = 0
-            UserNutrients.create(user = user, nutrient = nickel, quantity = quantity, measure_unit = mcg)
+            # phosphorus
 
-            phosphorus, created = Nutrient.get_or_create(name = "phosphorus")
-            quantity = 700
-            UserNutrients.create(user = user, nutrient = phosphorus, quantity = quantity, measure_unit = mg)
+            # selenium
 
-            selenium, created = Nutrient.get_or_create(name = "selenium")
             quantity = 55
             UserNutrients.create(user = user, nutrient = selenium, quantity = quantity, measure_unit = mcg)
 
-            choline, created = Nutrient.get_or_create(name = "choline")
+            # choline
             if user.sex_rounded == "male":
                 quantity = 550
             else:
                 quantity = 425
             UserNutrients.create(user = user, nutrient = choline, quantity = quantity, measure_unit = mg)
 
-            sodium_underdose = "The issue with sodium is that we have too much! High intakes of salt are associated with high blood pressure, which is a risk factor for kidney disease and cardiovascular disease (such as heart disease and stroke)."
-            sodium, created = Nutrient.get_or_create(name = "sodium", underdose = sodium_underdose)
+            # sodium
             if user.age >= 19 and user.age <= 50:
                 quantity = 1500
             elif user.age <= 70:
@@ -266,28 +267,24 @@ def create_database(db_fn, force = False):
                 quantity = 1200
             UserNutrients.create(user = user, nutrient = sodium, quantity = quantity, measure_unit = mg)
 
-            vanadium, created = Nutrient.get_or_create(name = "vanadium")
             quantity = 0
             UserNutrients.create(user = user, nutrient = vanadium, quantity = quantity, measure_unit = mcg)
 
-            A_underdose = "Poor vision, increased susceptibility to infection."
-            A, created = Nutrient.get_or_create(name = "A", underdose = A_underdose)
+            # A
             if user.sex_rounded == "male":
                 quantity = 900
             else:
                 quantity = 700
             UserNutrients.create(user = user, nutrient = A, quantity = quantity, measure_unit = mcg)
 
-            B3_underdose = "Deficiency is rare, and symptoms include diarrhoea, dementia, dermatitis, dizziness, confusion, swollen tongue, irritability, loss of appetite, weakness."
-            B3, created = Nutrient.get_or_create(name = "B3", underdose = B3_underdose)
+            # B3
             if user.sex_rounded == "male":
                 quantity = 16
             else:
                 quantity = 14
             UserNutrients.create(user = user, nutrient = B3, quantity = quantity, measure_unit = mg)
 
-            B6_underdose = "Smooth tongue, cracks in corners of the mouth, muscle twitching, convulsions, irritability, confusion and dermatitis."
-            B6, created = Nutrient.get_or_create(name = "B6", underdose = B6_underdose)
+            # B6
             if user.sex_rounded == "male":
                 if user.age >= 19 and user.age <= 50:
                     quantity = 1.3
@@ -300,8 +297,7 @@ def create_database(db_fn, force = False):
                     quantity = 1.5
             UserNutrients.create(user = user, nutrient = B6, quantity = quantity, measure_unit = mg)
 
-            C_underdose = "Dry skin, poor wound healing, bleeding gums, bruising, increased risk of infection."
-            C, created = Nutrient.get_or_create(name = "C", underdose = C_underdose)
+            # C
             if user.sex_rounded == "male":
                 quantity = 90
             else:
@@ -315,12 +311,9 @@ def create_database(db_fn, force = False):
                 quantity = 20
             UserNutrients.create(user = user, nutrient = D, quantity = quantity, measure_unit = mcg)
 
-            E, created = Nutrient.get_or_create(name = "E")
-            quantity = 15
-            UserNutrients.create(user = user, nutrient = E, quantity = quantity, measure_unit = mg)
+            # E
 
-            zinc_underdose = "Loss of taste, poor growth and wound healing, dry skin, increased susceptibility to infection."
-            zinc, created = Nutrient.get_or_create(name = "zinc", underdose = zinc_underdose)
+            # zinc
             if user.sex_rounded == "male":
                 quantity = 11
             else:

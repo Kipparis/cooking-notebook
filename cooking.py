@@ -8,6 +8,7 @@ import argparse
 import pandas as pd
 from peewee import *
 from utils.models import *
+from utils.nutrients import find_nutrients
 
 from utils import recipe
 
@@ -55,6 +56,10 @@ parser.add_argument('--working-dir',
         type    = str,
         help    = "file to which recipes and buy list must be outputted",
         dest    = "working_dir")
+parser.add_argument('--find-nutrients',
+                    action = "store_true",
+                    help = "go through recipes and try to find nutrient for each ingredient",
+                    dest = "find_nutrients")
 parser.add_argument('-l', '--list',
                     action  = "store_true",
                     help    = "list all recipes",
@@ -110,6 +115,32 @@ if __name__ == "__main__":
 
     if args.find_nutrients:
         print("finding nutrients")
+        for ingredient in Ingredient.select():
+            print(f"finding nutrients for {ingredient.name}")
+            for name, quantity, measure_unit in find_nutrients(ingredient.name):
+                print(f"\tget {name} {quantity} {measure_unit}")
+                matching_nutrients = Nutrient.select().where(Nutrient.name ** name) # ILIKE analogue
+                assert len(matching_nutrients) < 2, "ERROR: >= 2 matching nutrients by name"
+                if len(matching_nutrients) == 0:
+                    continue    # get nutrient we don't know about yet
+                nutrient = matching_nutrients.get()
+                print(f"\tfound nutrient entry in database: ({nutrient.id}, {nutrient.name}, {nutrient.fullname})")
+                mu = MeasureUnit.get(MeasureUnit.name == measure_unit)
+                try:
+                    IngredientNutrient.create(ingredient   = ingredient,
+                                              nutrient     = nutrient,
+                                              quantity     = quantity,
+                                              measure_unit = mu)
+                except IntegrityError:
+                    entry = (IngredientNutrient
+                             .select(IngredientNutrient, Nutrient, Ingredient, MeasureUnit)
+                             .join_from(IngredientNutrient, Ingredient)
+                             .join_from(IngredientNutrient, Nutrient)
+                             .join_from(IngredientNutrient, MeasureUnit)
+                             .where((Nutrient.id == nutrient) & (Ingredient.id == ingredient))
+                             .get())
+                    print(f"IngredientNutrient already exists: ({entry.ingredient.name}, {entry.nutrient.name}, {entry.quantity}, {entry.measure_unit.name})")
+
 
     if args.add:    # add recipe(s)
         MealType.output_choices()
