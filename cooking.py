@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import os, sys
-import pandas as pd
 import datetime
 import argparse
 
+import pandas as pd
 from peewee import *
 from utils.models import *
 
