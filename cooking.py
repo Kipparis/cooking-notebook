@@ -219,6 +219,7 @@ if __name__ == "__main__":
             print("no recipes in the book")
     if args.create_user:
         print("creating user profile")
+        User.create_user(*User.input_prompt())
 
     if args.aggregate_nutrients:
         print("aggregating nutrients")

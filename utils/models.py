@@ -2,6 +2,9 @@ import os
 from peewee import *
 import pandas as pd
 
+import datetime
+from datetime import date
+
 def create_database(db_fn, force = False):
     sqlite_db = SqliteDatabase(db_fn, pragmas=[('foreign_keys', 'on')])
 
@@ -114,8 +117,12 @@ def create_database(db_fn, force = False):
             # create user index
             user = User.create(birth_date = birth_date,
                         sex = sex)
-            # calculate needed nutrients
-            UserNutrients.calculate_nutrients(user)
+
+        def input_prompt():
+            birth_date_str = input("enter birth date (YYYY/MM/DD): ")
+            birth_date = datetime.datetime.strptime(birth_date_str, '%Y/%m/%d')
+            sex = float(input("enter sex from 0 to 1 (0 - male, 1 - female): "))
+            return birth_date, sex
 
         @property
         def age(self):
@@ -123,7 +130,7 @@ def create_database(db_fn, force = False):
 
         @property
         def sex_rounded(self):
-            return (round(self.sex) == 0 ? 'male' : 'female')
+            return ('male' if round(self.sex) == 0 else 'female')
 
 
     tables.append(User)
