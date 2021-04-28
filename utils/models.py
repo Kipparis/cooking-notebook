@@ -41,6 +41,16 @@ def create_database(db_fn, force = False):
             for mtype in MealType.select():
                 print(f"{mtype.id}. {mtype.name}")
 
+        def choose():
+            MealType.output_choices()
+            mealtype = input("enter id or name: ")
+            if mealtype.isdigit():
+                mealtype = MealType.get(MealType.id == mealtype)
+            else:
+                mealtype = MealType.get(MealType.name == mealtype)
+            return mealtype
+
+
     tables.append(MealType)
 
     class Recipe(BaseModel):
@@ -76,6 +86,56 @@ def create_database(db_fn, force = False):
                                         ingredient = ingredient,
                                         quantity = quantity,          # see docstring
                                         measure_unit = measure_unit)  # see ^^^^^^^^^
+
+        def choose_by_mealtype(mealtype):
+            query = Recipe.select().where(Recipe.meal_type == mealtype).where(Recipe.meal_type == mealtype)
+            for recipe in query:
+                print("\t{}. {}".format(recipe.id, recipe.name))
+            recipe = input("enter id or name: ")
+            if recipe.isdigit():
+                recipe = Recipe.get(Recipe.id == recipe)
+            else:
+                recipe = Recipe.get(Recipe.name == recipe)
+            return recipe
+
+
+        def aggregate_recipe(self):
+            """
+            return ingredients, algorithm, nutrients
+            """
+            ingr_columns = ['ingr_name', 'ingr_quantity', 'ingr_mu']    # ingredients info
+            nutr_columns = ['nutr_name', 'nutr_quantity', 'nutr_mu']    # nutrient info
+            ingredientMu = MeasureUnit.alias()  # create alias so we can
+            nutrientMu   = MeasureUnit.alias()  # use double joins
+            query = (Recipe
+                     .select(Recipe.name, Recipe.algorithm,
+                             Ingredient.name.alias(ingr_columns[0]),    # join ingredients
+                             RecipeIngredient.quantity.alias(ingr_columns[1]),
+                             ingredientMu.name.alias(ingr_columns[2]),
+                             Nutrient.name.alias(nutr_columns[0]),      # join nutrients
+                             IngredientNutrient.quantity.alias(nutr_columns[1]),
+                             nutrientMu.name.alias(nutr_columns[2]))
+                     .join(RecipeIngredient)
+                     .join(Ingredient)
+                     .join_from(RecipeIngredient, ingredientMu)
+                     .join(IngredientNutrient,
+                           join_type=JOIN.LEFT_OUTER,
+                           on=(IngredientNutrient.ingredient_id == Ingredient.id))
+                     .join(Nutrient,
+                           join_type=JOIN.LEFT_OUTER,
+                           on=(IngredientNutrient.nutrient_id == Nutrient.id))
+                     .join_from(IngredientNutrient, nutrientMu,
+                                join_type=JOIN.LEFT_OUTER)
+                     .where(Recipe.id == self.id))
+
+            df = pd.DataFrame(list(query.dicts()))
+            assert len(df['algorithm'].unique()) == 1, "different algorithms for recipe {}".format(self.name)
+            algorithm = df.at[0, 'algorithm']
+
+            ingr = df[ingr_columns].drop_duplicates()
+            nutr = df[nutr_columns].groupby([nutr_columns[0], nutr_columns[-1]]).agg('sum')
+            return ingr, algorithm, nutr
+
 
     tables.append(Recipe)
 

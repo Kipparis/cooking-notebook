@@ -19,12 +19,11 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 # TODO:
-# определять офсет для которого состоявляется ценовая цена и возможность
-# кастомизировать вывод
-# если что-то было не найдено, выводить в стандартный вывод ошибок
-#
-# задаешь аргументы, он создает файл на эту неделю с датами и суммарным
-# списком покупак, для вывода в файл использовать формат
+# provide interface so you can fill by hands missing values like
+#   + ingridients which doesn't have nutrients
+#   + conversions from one measure unit to g, mg, mcg
+#   + underdose or overdose of some vitamin
+#   + ingredient type (for compatibility with other ingredients)
 
 parser = argparse.ArgumentParser(description="Diet manipulation and monitoring")
 # через сколько дней считать план
@@ -92,6 +91,10 @@ parser.add_argument('--aggregate-nutrients',
                     action = 'store_true',
                     help ='calculate summarized nutrients for passed recipes (and ingredients, for which we don\'t know nutrition)',
                     dest ='aggregate_nutrients')
+parser.add_argument('--choose-recipe',
+                    action = 'store_true',
+                    help = 'interactively choose what to eat',
+                    dest = 'choose_recipe')
 
 args = parser.parse_args()
 
@@ -103,6 +106,20 @@ if __name__ == "__main__":
 
     if args.do_concat_recipe:
         concat_recipe()
+    if args.choose_recipe:
+        print("choosing recipe")
+        meal_type = MealType.choose()
+        recipe = Recipe.choose_by_mealtype(meal_type)
+        # join tables
+        # convert to pandas
+        # extract ingredients and algorithm
+        ingredients, algorithm, nutrients = Recipe.aggregate_recipe(recipe)
+        print("\n\nINGREDIENTS")
+        print(ingredients)
+        print("\n\nALGORITHM")
+        print(algorithm)
+        print("\n\nNUTRIENTS")
+        print(nutrients)
 
     if args.export_tables is not None:
         if len(args.export_tables) == 0:
