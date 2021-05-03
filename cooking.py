@@ -84,9 +84,13 @@ parser.add_argument('-i', '--import',
                     help = "import database from serveral csv files (exported and imported files must have same versions)",
                     dest = "import_tables")
 parser.add_argument('--recipes',
-                    nargs='*',
-                    help ='specify target recipes\' names (otherwise, when needed, you will be given interactive prompt)',
-                    dest = 'recipes')
+                    nargs = '*',
+                    help  = 'specify target recipes\' names (otherwise, when needed, you will be given interactive prompt)',
+                    dest  = 'recipes')
+parser.add_argument('--ingredients',
+                    nargs = '*',
+                    help  = 'specify target ingredient\'s names (otherwise interactive prompt used)',
+                    dest  = 'ingredients')
 parser.add_argument('--aggregate-nutrients',
                     action = 'store_true',
                     help ='calculate summarized nutrients for passed recipes (and ingredients, for which we don\'t know nutrition)',
@@ -112,8 +116,6 @@ if __name__ == "__main__":
     # also it returns database instance and models
     globals().update(ret_d)
 
-    if args.do_concat_recipe:
-        concat_recipe()
     if args.display_conversions:
         print(IngredientConv.return_all())
 

@@ -100,6 +100,22 @@ def create_database(db_fn, force = False):
                 recipe = Recipe.get(Recipe.name == recipe)
             return recipe
 
+        def aggregate_recipes():
+            """return query of aggregated recipes"""
+            ingredientMu = MeasureUnit.alias()  # create alias so we can
+            nutrientMu = MeasureUnit.alias()    # join this table twice
+            query = (Recipe
+                     .select(Recipe,
+                             RecipeIngredient, Ingredient, ingredientMu,
+                             IngredientNutrient, Nutrient, nutrientMu)
+                     .join(RecipeIngredient,   attr='ri')
+                     .join(Ingredient,         attr='ing')
+                     .join(IngredientNutrient, attr='inu')
+                     .join(Nutrient, attr='nu')
+                     .join_from(RecipeIngredient, ingredientMu, attr='mu')
+                     .join_from(IngredientNutrient, nutrientMu, attr='mu')
+                     .group_by(Recipe.name, Nutrient.name, nutrientMu.name))
+            return query
 
         def aggregate_recipe(self):
             """
@@ -184,6 +200,12 @@ def create_database(db_fn, force = False):
                                   decimal_places = 2,
                                   auto_round     = True)
         measure_unit = ForeignKeyField(MeasureUnit)
+
+        class Meta:
+                indexes = (
+                    # create a unique on ingredient/nutrient
+                    (('recipe', 'ingredient'), True),
+                )
 
     tables.append(RecipeIngredient)
 
