@@ -95,6 +95,14 @@ parser.add_argument('--choose-recipe',
                     action = 'store_true',
                     help = 'interactively choose what to eat',
                     dest = 'choose_recipe')
+parser.add_argument('--fill-conversion',
+                    action = 'store_true',
+                    help = 'fill unresolved conversions (use `ingredients` argument to specify which conversion you want to fill)',
+                    dest = 'fill_conversion')
+parser.add_argument('--display-conversions',
+                    action = 'store_true',
+                    help = 'display stored conversion rules',
+                    dest = 'display_conversions')
 
 args = parser.parse_args()
 
@@ -106,6 +114,29 @@ if __name__ == "__main__":
 
     if args.do_concat_recipe:
         concat_recipe()
+    if args.display_conversions:
+        print(IngredientConv.return_all())
+
+    if args.fill_conversion:
+        # if ingredients specified -> use them
+        if args.ingredients:
+            for ingredient in args.ingredients:
+                ingredient = Ingredient.find(ingredient)
+        # otherwise interactively ask user
+        else:
+            entry = IngredientConv.prompt()
+            print(entry.ingr, entry.mu)
+            ingr    = Ingredient.get(Ingredient.name == entry.ingr)
+            from_mu = MeasureUnit.get(MeasureUnit.name == entry.mu)
+            to_mu_name = input("choose one mu from following ({}). enter name: ".format(", ".join(base_mu)))
+            to_mu = MeasureUnit.get(MeasureUnit.name == to_mu_name)
+            print(f"You choose: {to_mu.id}, {to_mu.name}")
+            multiplier = float(input("enter multiplier (from_mu * multiplier = to_mu): "))
+            conv = IngredientConv.create(ingredient = ingr,
+                                         from_mu = from_mu,
+                                         to_mu = to_mu,
+                                         multiplier = multiplier)
+
     if args.choose_recipe:
         print("choosing recipe")
         meal_type = MealType.choose()

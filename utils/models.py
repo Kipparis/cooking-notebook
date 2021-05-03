@@ -5,6 +5,8 @@ import pandas as pd
 import datetime
 from datetime import date
 
+from .settings import *
+
 def create_database(db_fn, force = False):
     sqlite_db = SqliteDatabase(db_fn, pragmas=[('foreign_keys', 'on')])
 
@@ -144,6 +146,24 @@ def create_database(db_fn, force = False):
         id   = AutoField()
         name = TextField(unique = True)
 
+        def prompt():
+            query = Ingredient.select(Ingredient.id, Ingredient.name)
+            df = pd.DataFrame(list(query.dicts())).set_index("id").sort_values("name")
+            pd.set_option('display.max_rows', None)
+            print(df)
+            return input("enter name or id: ")
+
+        def find(ingr):
+            """
+            return Ingredient entity by id or name
+            """
+            if ingr.isdigit():
+                ingr = Ingredient.get(Ingredient.id == ingr)
+            else:
+                ingr = Ingredient.get(Ingredient.name == ingr)
+            return ingr
+
+
     tables.append(Ingredient)
 
     class MeasureUnit(BaseModel):
@@ -166,6 +186,69 @@ def create_database(db_fn, force = False):
         measure_unit = ForeignKeyField(MeasureUnit)
 
     tables.append(RecipeIngredient)
+
+    class IngredientConv(BaseModel):
+        """
+        if you want get new measure unit, you should
+        find source mu in `from_mu` and dest mu in `to_mu`
+        than multiply quantity that you have by `multiplier`
+        """
+        id = AutoField()
+        ingredient = ForeignKeyField(Ingredient)       # cacao
+        from_mu    = ForeignKeyField(MeasureUnit)      # tbsp
+        to_mu      = ForeignKeyField(MeasureUnit)      # g
+        multiplier = DecimalField(max_digits     = 14, # 10 (1 tbsp of cacao = 10 g of cacao)
+                                  decimal_places = 4,
+                                  auto_round     = True)
+
+        def return_all():
+            """
+            return df containing all conversions
+            """
+            toMu   = MeasureUnit.alias() # create alias so we can
+            fromMu = MeasureUnit.alias() # use double joins
+            query = (IngredientConv
+                     .select(IngredientConv.id.alias("id"),
+                             Ingredient.name.alias("ingr"),
+                             fromMu.name.alias("fromMu"),
+                             IngredientConv.multiplier.alias("multiplier"),
+                             toMu.name.alias("toMu"))
+                     .join(Ingredient)
+                     .join_from(IngredientConv, toMu,
+                                on=(IngredientConv.to_mu_id == toMu.id))
+                     .join_from(IngredientConv, fromMu,
+                                on=(IngredientConv.from_mu_id == fromMu.id)))
+            df = pd.DataFrame(list(query.dicts())).set_index("id")
+            return df
+
+        def prompt():
+            """
+            select ingredient entries with no conversion to base MeasureUnit's
+            """
+            ingr_alias = "ingr"
+            mu_alias   = "mu"
+            # conves we already done
+            done_query = (IngredientConv
+                          .select(Ingredient.name.alias(ingr_alias),
+                                  MeasureUnit.name.alias(mu_alias))
+                          .join(Ingredient)
+                          .join_from(IngredientConv, MeasureUnit,
+                                     on=(IngredientConv.from_mu_id == MeasureUnit.id)))
+            # all entries in all recipes
+            all_entries = (RecipeIngredient
+                     .select(Ingredient.name.alias(ingr_alias),
+                             MeasureUnit.name.alias(mu_alias))
+                     .join(Ingredient, on=(Ingredient.id == RecipeIngredient.ingredient_id))
+                     .join_from(RecipeIngredient, MeasureUnit)
+                     .where(MeasureUnit.name.not_in(base_mu))
+                     .distinct())
+            query = all_entries - done_query
+            df = pd.DataFrame(list(query.dicts()))
+            print(df)
+            conv = int(input("enter id: "))
+            return df.iloc[conv]
+
+    tables.append(IngredientConv)
 
     class User(BaseModel):
         id = AutoField()
@@ -198,6 +281,7 @@ def create_database(db_fn, force = False):
     class Nutrient(BaseModel):
         id = AutoField()
         name = TextField(unique = True)
+        fullname = TextField(default = "")
         underdose = TextField(null = True)  # how you fell, if you don't have enough of this nutrient
         overdose = TextField(null = True)   # how you fell, if you have too much of this nutrient
 
