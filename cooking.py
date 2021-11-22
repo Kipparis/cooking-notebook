@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os, sys
+from pathlib import Path
 import datetime
 import argparse
 
@@ -115,6 +116,18 @@ if __name__ == "__main__":
     # create database if it not exists
     # also it returns database instance and models
     globals().update(ret_d)
+
+
+    if args.load_from_nih_od_tables:
+        directory = "nih_od_tables"
+        # there are should be 5 tables
+        files = ["RDA_AI_elements.html",
+                 "RDA_AI_vitamins.html",
+                 "RDA_AI_water_macronutrients.html",
+                 "UL_elements.html",
+                 "UL_vitamins.html"]
+        for path in [Path(directory) / Path(file) for file in files]:
+            print(path, path.exists())
 
     if args.display_conversions:
         print(IngredientConv.return_all())
