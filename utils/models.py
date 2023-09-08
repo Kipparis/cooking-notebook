@@ -8,6 +8,10 @@ from datetime import date
 from .settings import *
 
 def create_database(db_fn, force = False):
+    """
+    return dictionary to update globals (sqlite_db and model classes)
+           and list of model Classes
+    """
     sqlite_db = SqliteDatabase(db_fn, pragmas=[('foreign_keys', 'on')])
 
     tables = []
@@ -39,9 +43,11 @@ def create_database(db_fn, force = False):
         id   = AutoField()
         name = TextField()
 
+        # TODO: make **kvargs use, so you pass various select options
+        #       and make this classmethod in base model
         def output_choices():
             for mtype in MealType.select():
-                print(f"{mtype.id}. {mtype.name}")
+                print(f"\t{mtype.id}. {mtype.name}")
 
         def choose():
             MealType.output_choices()
@@ -121,6 +127,11 @@ def create_database(db_fn, force = False):
             """
             return ingredients, algorithm, nutrients
             """
+            # TODO:
+            #   + first fetch ingredients, then use them as subquery and join
+            #     nutrients
+            #   + when calculating nutrients, consider conversion to g and than
+            #     to 100 g
             ingr_columns = ['ingr_name', 'ingr_quantity', 'ingr_mu']    # ingredients info
             nutr_columns = ['nutr_name', 'nutr_quantity', 'nutr_mu']    # nutrient info
             ingredientMu = MeasureUnit.alias()  # create alias so we can
@@ -189,6 +200,13 @@ def create_database(db_fn, force = False):
         def output_choices():
             for unit in MeasureUnit.select():
                 print(f"{unit.id}. {unit.name}")
+
+        def find(inp):
+            if inp.isdigit():
+                mu = MeasureUnit.get(MeasureUnit.id == int(inp))
+            else:
+                mu = MeasureUnit.get(MeasureUnit.name ** inp)
+            return mu
 
     tables.append(MeasureUnit)
 
@@ -307,6 +325,35 @@ def create_database(db_fn, force = False):
         underdose = TextField(null = True)  # how you fell, if you don't have enough of this nutrient
         overdose = TextField(null = True)   # how you fell, if you have too much of this nutrient
 
+        def prompt():
+            query = Nutrient.select(Nutrient.id, Nutrient.name, Nutrient.fullname)
+            print(pd.DataFrame(list(query.dicts())).set_index('id'))
+            inp = input("enter id or name: ")
+            return inp
+
+        def find(inp):
+            if not inp.isdigit():
+                nutrient = Nutrient.get(Nutrient.name ** inp)
+            else:
+                nutrient = Nutrient.get(Nutrient.id == int(inp))
+            return nutrient
+
+        def modify_interactive(self):
+            name = input("enter new name (leave empty for unchanged): ")
+            if name not in "":
+                self.name = name
+            fullname = input("enter new fullname (leave empty for unchanged): ")
+            if fullname not in "":
+                self.fullname = fullname
+            underdose = input("enter new underdose (leave empty for unchanged): ")
+            if underdose not in "":
+                self.underdose = underdose
+            overdose = input("enter new overdose (leave empty for unchanged): ")
+            if overdose not in "":
+                self.overdose = overdose
+
+            self.save()
+
     tables.append(Nutrient)
 
     class IngredientNutrient(BaseModel):
@@ -327,6 +374,56 @@ def create_database(db_fn, force = False):
 
     tables.append(IngredientNutrient)
 
+    class NutrientBound(BaseModel):
+        """
+        rules depending on age, sex, pregrancy. how to choose correct nutrient intake
+        if you use pills, you pregnant or something else special, you should double check recommended doses. in rare cases I skip some details to simplify output
+        """
+        id = AutoField()
+        nutrient  = ForeignKeyField(Nutrient, backref="bounds")
+        age_lower = DecimalField(max_digits = 8,
+                                 decimal_places = 4,
+                                 auto_round = True)
+        age_upper = DecimalField(max_digits = 8,
+                                 decimal_places = 4,
+                                 auto_round = True)
+        sex = TextField(choices=[('male', 'male'), ('female', 'female')])
+        # Adequate Intakes (AIs) aka lower bound (use RDA when possible)
+        AI = DecimalField(max_digits     = 10,
+                          decimal_places = 2,
+                          auto_round     = True,
+                          null           = True)
+        # Tolerable Upper Intake Levels (ULs) aka upper bound
+        UL = DecimalField(max_digits     = 10,
+                          decimal_places = 2,
+                          auto_round     = True,
+                          null           = True)
+        measure_unit = ForeignKeyField(MeasureUnit)
+
+        class Meta:
+                indexes = (
+                    # create a unique on ingredient/nutrient
+                    (('nutrient', 'age_lower', 'age_upper', 'sex'), True),
+                )
+
+        def create_prompt(nutrient):
+            age_lower = float(input("enter lower age bound: "))
+            age_upper = float(input("enter upper age bound: "))
+            sex = str(input("enter sex: "))
+            AI = input("enter rda (or ai): ")
+            UL = input("enter ul: ")
+            mu = MeasureUnit.find(input("enter measure unit: "))
+            bound = NutrientBound.create(nutrient = nutrient,
+                                         age_lower = age_lower,
+                                         age_upper = age_upper,
+                                         sex = sex,
+                                         AI = AI,
+                                         UL = UL,
+                                         measure_unit = mu)
+            return bound
+
+    tables.append(NutrientBound)
+
     class UserNutrients(BaseModel):
         """
         IMPORTANT: it is not developed for people younger than 19
@@ -335,9 +432,6 @@ def create_database(db_fn, force = False):
         id = AutoField()
         user = ForeignKeyField(User)
         nutrient = ForeignKeyField(Nutrient)
-        quantity = DecimalField(max_digits     = 10,
-                                decimal_places = 2,
-                                auto_round     = True)
         measure_unit = ForeignKeyField(MeasureUnit)
 
         def calculate_nutrients(user):
@@ -352,146 +446,155 @@ def create_database(db_fn, force = False):
             # calcium
             # calculate qty
             if user.age >= 19 and user.age <= 50:
-                quantity = 1000
+                ai = 1000
             elif user.sex_rounded == 'male' and user.age >= 71:
-                quantity = 1200
+                ai = 1200
             elif user.sex_rounded == 'female' and user.age >= 51:
-                quantity = 1200
+                ai = 1200
             else:
-                quantity = 1000
+                ai = 1000
 
             # chloride
+            # The recommendation doesn't change for women who are pregnant or breastfeeding.
             # calculate qty
-            if user.age >= 19 and user.age <= 50:
-                quantity = 2300
+            if user.age >= 1 and user.age <= 3:
+                ai = 1500
+            elif user.age <= 8:
+                ai = 1900
+            elif user.age <= 50:
+                ai = 2300
             elif user.age <= 70:
-                quantity = 2000
+                ai = 2000
             else:
-                quantity = 1800
+                ai = 1800
 
-            quantity = 900
-            UserNutrients.create(user = user, nutrient = copper, quantity = quantity, measure_unit = mcg)
-
-            if user.sex_rounded == "male":
-                quantity = 4
             # copper
+            description = "Together with iron, it enables the body to form red blood cells."
+            ai = 900
+
+            # fluoride
+            if user.age <= 1:
+                print("WARNING: chloride quantity for age below 6 months should be 0.01 mg/day")
+                ai = 0.5
+            elif user.age <= 3:
+                ai = 0.7
+            elif user.age <= 8:
+                ai = 1
+            elif user.age <= 13:
+                ai = 2
+            elif user.age <= 18:
+                ai = 3
+            elif user.sex_rounded == "male":
+                ai = 4
             else:
-                quantity = 3
-            UserNutrients.create(user = user, nutrient = fluoride, quantity = quantity, measure_unit = mg)
+                ai = 3
 
-
-            quantity = 150
-            UserNutrients.create(user = user, nutrient = iodine, quantity = quantity, measure_unit = mcg)
+            B_description = "All B vitamins help the body convert food (carbohydrates) into fuel (glucose), which is used to produce energy. These B vitamins, often referred to as B-complex vitamins, also help the body use fats and protein. B-complex vitamins are needed for a healthy liver, and healthy skin, hair, and eyes."
             # B9
             B9_description = "Folic acid is crucial for proper brain function and plays an important role in mental and emotional health."
+            ai = 400
 
             # iodine
+            if user.age >= 1 and user.age <= 8:
+                ai = 90
+            elif user.age <= 13:
+                ai = 120
+            else:
+                ai = 150
+
             # iron
             if user.sex_rounded == "male":
-                quantity = 8
+                ai = 8
             elif user.age >= 19 and user.age <= 50:
-                quantity = 18
+                ai = 18
             else:
-                quantity = 8
-            UserNutrients.create(user = user, nutrient = iron, quantity = quantity, measure_unit = mg)
+                ai = 8
 
             # magnesium
             if user.sex_rounded == "male":
                 if user.age >= 19 and user.age <= 30:
-                    quantity = 400
+                    ai = 400
                 else:
-                    quantity = 420
+                    ai = 420
             else:
                 if user.age >= 19 and user.age <= 30:
-                    quantity = 310
+                    ai = 310
                 else:
-                    quantity = 320
-            UserNutrients.create(user = user, nutrient = magnesium, quantity = quantity, measure_unit = mg)
+                    ai = 320
 
             # manganese
             if user.sex_rounded == "male":
-                quantity = 2.3
+                ai = 2.3
             else:
-                quantity = 1.8
-            UserNutrients.create(user = user, nutrient = manganese, quantity = quantity, measure_unit = mg)
+                ai = 1.8
 
             # molybdenum
+            ai = 45
 
             # phosphorus
+            ai = 700
 
             # selenium
-
-            quantity = 55
-            UserNutrients.create(user = user, nutrient = selenium, quantity = quantity, measure_unit = mcg)
+            ai = 55
 
             # choline
             if user.sex_rounded == "male":
-                quantity = 550
+                ai = 550
             else:
-                quantity = 425
-            UserNutrients.create(user = user, nutrient = choline, quantity = quantity, measure_unit = mg)
+                ai = 425
 
             # sodium
             if user.age >= 19 and user.age <= 50:
-                quantity = 1500
+                ai = 1500
             elif user.age <= 70:
-                quantity = 1300
+                ai = 1300
             else:
-                quantity = 1200
-            UserNutrients.create(user = user, nutrient = sodium, quantity = quantity, measure_unit = mg)
-
-            quantity = 0
-            UserNutrients.create(user = user, nutrient = vanadium, quantity = quantity, measure_unit = mcg)
+                ai = 1200
 
             # A
             if user.sex_rounded == "male":
-                quantity = 900
+                ai = 900
             else:
-                quantity = 700
-            UserNutrients.create(user = user, nutrient = A, quantity = quantity, measure_unit = mcg)
+                ai = 700
 
             # B3
             if user.sex_rounded == "male":
-                quantity = 16
+                ai = 16
             else:
-                quantity = 14
-            UserNutrients.create(user = user, nutrient = B3, quantity = quantity, measure_unit = mg)
+                ai = 14
 
             # B6
             if user.sex_rounded == "male":
                 if user.age >= 19 and user.age <= 50:
-                    quantity = 1.3
+                    ai = 1.3
                 else:
-                    quantity = 1.7
+                    ai = 1.7
             else:
                 if user.age >= 19 and user.age <= 50:
-                    quantity = 1.3
+                    ai = 1.3
                 else:
-                    quantity = 1.5
-            UserNutrients.create(user = user, nutrient = B6, quantity = quantity, measure_unit = mg)
+                    ai = 1.5
 
             # C
             if user.sex_rounded == "male":
-                quantity = 90
+                ai = 90
             else:
-                quantity = 75
-            UserNutrients.create(user = user, nutrient = C, quantity = quantity, measure_unit = mg)
+                ai = 75
 
-            D, created = Nutrient.get_or_create(name = "D")
+            # D
             if user.age >= 1 and user.age <= 70:
-                quantity = 15
+                ai = 15
             else:
-                quantity = 20
-            UserNutrients.create(user = user, nutrient = D, quantity = quantity, measure_unit = mcg)
+                ai = 20
 
             # E
+            ai = 15
 
             # zinc
             if user.sex_rounded == "male":
-                quantity = 11
+                ai = 11
             else:
-                quantity = 8
-            UserNutrients.create(user = user, nutrient = zinc, quantity = quantity, measure_unit = mg)
+                ai = 8
 
     tables.append(UserNutrients)
 
@@ -503,13 +606,12 @@ def create_database(db_fn, force = False):
     ret_d = {}
     ret_d.update({"sqlite_db": sqlite_db})
     ret_d.update({table.__name__: table for table in tables})
-    return ret_d
-    # return {"hehe": Recipe.__name__}
+    return ret_d, tables
 
-def export_database():
+def export_database(tables):
     """
     this method uses base model .export_model function
     """
     # export tables
     for table in tables:
-        table.export_model()
+        table.export_table()
