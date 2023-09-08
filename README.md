@@ -1,6 +1,10 @@
 # cooking-notebook
 Calculations and suggestions on recipes
 
+# Откуда достаются нутриенты
+
+The FoodData Central API provides REST access to FoodData Central (FDC). It is intended primarily to assist application developers wishing to incorporate nutrient data into their applications or websites.\n  To take full advantage of the API, developers should familiarize themselves with the database by reading the database documentation available via links on [Data Type Documentation](https://fdc.nal.usda.gov/data-documentation.html). This documentation provides the detailed definitions and descriptions needed to understand the data elements referenced in the API documentation.\n  \n  Additional details about the API including rate limits, access, and licensing are available on the [FDC website](https://fdc.nal.usda.gov/api-guide.html)
+
 # Добавляя рецепты
 Чтобы не возникало разногласий при попытке сборки ингридиентов, соблюдай правила написания названий продуктов:  
 Более общее прилагательное &rarr; частное прилагательное &rarr; существительное.  
