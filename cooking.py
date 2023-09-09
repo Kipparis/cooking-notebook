@@ -75,4 +75,24 @@ if __name__ == "__main__":
         recipe_names = [recipe['name'] for recipe in get_recipes()]
         pp.pprint(recipe_names)
 
+    if args.do_output_ingredients:
+        print(f"DEBUG: summing up and outputting ingredients")
+        ingredients = defaultdict(lambda: defaultdict(int))
+        for recipe in get_recipes():
+            if 'ingredients' not in recipe:
+                print(f"WARN: recipe does not contain ingredients")
+                continue
+            print(f"DEBUG: processing recipe ingredients")
+            pp.pprint(recipe['ingredients'])
+            for ingredient in recipe['ingredients']:
+                if 'name' not in ingredient:
+                    print(f"WARN: ingredient does not contain name")
+                if 'qty' not in ingredient:
+                    print(f"WARN: ingredient does not contain qty")
+                if 'unit' not in ingredient:
+                    print(f"WARN: ingredient does not contain unit")
+
+                ingredients[ingredient['name']][ingredient['unit']] += ingredient['qty']
+        pp.pprint({k: dict(val) for k, val in ingredients.items()})
+
 
