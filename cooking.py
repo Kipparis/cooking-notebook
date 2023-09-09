@@ -5,6 +5,9 @@ from pathlib import Path
 import datetime
 import argparse
 
+from pprint import PrettyPrinter
+pp = PrettyPrinter(indent=4)
+
 from utils.settings import *
 
 # ========== Print to stderr ===========
@@ -24,10 +27,34 @@ parser.add_argument('--working-dir',
                     type    = str,
                     help    = "directory with recipes",
                     dest    = "working_dir")
+parser.add_argument('--list', '-l',
+                    action  = "store_true",
+                    help    = "only list recipe names",
+                    dest    = "do_list_recipes")
 
 args = parser.parse_args()
 
 if __name__ == "__main__":
     print("hello")
+    print(f"DEBUG: recipe dir: {args.working_dir}")
+    if args.do_list_recipes:
+        print(f"DEBUG: listing only recipe names")
+        recipe_names = set()
+        for fs_item in Path(args.working_dir).glob('*.y*ml'):
+            if not fs_item.is_file(): continue
+            print(f"DEBUG: extracting recipe name from {fs_item!s} file")
+            import yaml
+            with open(fs_item) as fl:
+                recipe_data = yaml.safe_load(fl)
+            pp.pprint(recipe_data)
+            if "name" not in recipe_data:
+                print(f"WARN: recipe does not contain name: {fs_item!s}")
+                continue
+            if recipe_data["name"] in recipe_names:
+                print(f"WARN: duplicate recipe_names: {recipe_data['name']}")
+                continue
+            print(f"DEBUG: adding {recipe_data['name']} into resulting list of recipe names")
+            recipe_names.add(recipe_data["name"])
+        pp.pprint(recipe_names)
 
 
