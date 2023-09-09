@@ -21,11 +21,11 @@ parser.add_argument('--output-file',
                     help    = "file to which recipes and buy list must be outputted",
                     dest    = "out_file")
 parser.add_argument('--working-dir',
-        default = "generated",
-        metavar = "DIR",
-        type    = str,
-        help    = "file to which recipes and buy list must be outputted",
-        dest    = "working_dir")
+                    default = "recipes",
+                    metavar = "DIR",
+                    type    = str,
+                    help    = "directory with recipes",
+                    dest    = "working_dir")
 
 args = parser.parse_args()
 
