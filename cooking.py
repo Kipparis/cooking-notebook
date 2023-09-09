@@ -13,13 +13,6 @@ from utils.settings import *
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
-# TODO:
-# provide interface so you can fill by hands missing values like
-#   + ingridients which doesn't have nutrients
-#   + conversions from one measure unit to g, mg, mcg
-#   + underdose or overdose of some vitamin
-#   + ingredient type (for compatibility with other ingredients)
-
 parser = argparse.ArgumentParser(description="Diet manipulation and monitoring")
 parser.add_argument('--output-file',
                     default = "stdout",
