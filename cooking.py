@@ -5,8 +5,6 @@ from pathlib import Path
 import datetime
 import argparse
 
-import pandas as pd
-
 from utils.settings import *
 
 # ========== Print to stderr ===========
