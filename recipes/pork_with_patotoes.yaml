@@ -1,0 +1,57 @@
+name: pork with potatoes
+
+source: https://chefmarket.ru/5dinners-original/constructed/svinina-tomlennaya-v-souse-iz-marakuyi-i-kunjuta-s-pechenym-kartofelem-v-aromatnyh-speciyah1
+
+ingredients:
+  - name: parsley
+    qty: 10
+    unit: g
+  - name: garlic
+    qty: 3
+    unit: clove
+  - name: onion
+    qty: 1
+    unit: item
+  - name: chilli pepper
+    qty: 2
+    unit: slices
+  - name: sweet paprika
+    qty: 1
+    unit: by_taste
+  - name: mustart powder
+    qty: 1
+    unit: by_taste
+  - name: ground garlic
+    qty: 1
+    unit: by_taste
+  - name: caraway
+    qty: 1
+    unit: by_taste
+  - name: coriander
+    qty: 1
+    unit: by_taste
+  - name: pork
+    qty: 400
+    unit: g
+  - name: sesame oil
+    qty: 1
+    unit: tbsp
+  - name: oyster sauce
+    qty: 1
+    unit: tbsp
+  - name: green pea
+    qty: 60
+    unit: g
+  - name: potato
+    qty: 500
+    unit: g
+
+preparations: |
+  what to do before dish cooking (untifreeze, pickling)
+  second example
+
+recipe: |
+  human reading recipe
+  that just tells how to prepare
+  the dish
+

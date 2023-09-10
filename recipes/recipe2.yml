@@ -1,0 +1,25 @@
+name: Recipe name 2
+
+ingredients:
+  - name: chicken meat
+    qty: 2000
+    unit: kg
+  - name: water
+    qty: 100
+    unit: ml
+  - name: onion
+    qty: 3
+    unit: items
+  - name: sause
+    qty: 20
+    unit: ml
+
+preparations: |
+  what to do before dish cooking (untifreeze, pickling)
+  second example
+
+recipe: |
+  human reading recipe
+  that just tells how to prepare
+  the dish
+

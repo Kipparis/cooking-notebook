@@ -1,0 +1,21 @@
+name: Recipe name 1
+
+ingredients:
+  - name: onion
+    qty: 2
+    unit: items
+  - name: salt
+    qty: 1
+    unit: by_taste
+  - name: sause
+    qty: 50
+    unit: ml
+
+preparations: |
+  what to do before dish cooking (untifreeze, pickling)
+
+recipe: |
+  human reading recipe
+  that just tells how to prepare
+  the dish
+

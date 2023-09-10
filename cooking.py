@@ -11,6 +11,7 @@ pp = PrettyPrinter(indent=4)
 from utils.settings import *
 
 import yaml
+from collections import defaultdict
 
 # ========== Print to stderr ===========
 def eprint(*args, **kwargs):

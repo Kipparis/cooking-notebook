@@ -1,0 +1,61 @@
+name: ramen with bass fillet
+
+source: https://chefmarket.ru/5dinners-original/constructed/ramen-na-nasyshchennom-bulone-s-file-sibasa-v-apelsinovo-imbirnom-marinade-risovoy-lapshoy-perepelinymi-yaycami-i-mikrozelenyu-goroha2
+
+ingredients:
+  - name: seabass
+    qty: 2
+    unit: item
+  - name: black sesame
+    qty: 2
+    unit: g
+  - name: white sesame
+    qty: 2
+    unit: g
+  - name: star anise
+    qty: 2
+    unit: item
+  - name: orange-ginger sauce
+    qty: 100
+    unit: g
+  - name: quail eggs
+    qty: 2
+    unit: item
+  - name: dark agave syrup
+    qty: 10
+    unit: g
+  - name: shichimi togarashi pepper mix
+    qty: 2
+    unit: g
+  - name: carrot
+    qty: 100
+    unit: g
+  - name: beef broth
+    qty: 400
+    unit: g
+  - name: rice noodles
+    qty: 50
+    unit: g
+  - name: soy sauce
+    qty: 50
+    unit: g
+  - name: white miso paste
+    qty: 20
+    unit: g
+  - name: broccoli
+    qty: 100
+    unit: g
+  - name: pea microgreens
+    qty: 5
+    unit: g
+
+
+preparations: |
+  what to do before dish cooking (untifreeze, pickling)
+  second example
+
+recipe: |
+  human reading recipe
+  that just tells how to prepare
+  the dish
+

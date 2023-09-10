@@ -1,0 +1,54 @@
+name: chicken things in kimchi sauce
+
+source: https://chefmarket.ru/5dinners-original/constructed/kurinye-bedryshki-v-souse-kimchi-s-jasminovym-risom-i-salatom-iz-svejey-grushi1
+
+ingredients:
+  - name: jasmine rice
+    qty: 100
+    unit: g
+  - name: kimchi sauce
+    qty: 10
+    unit: g
+  - name: oyster sauce
+    qty: 20
+    unit: g
+  - name: mirin rice sauce
+    qty: 20
+    unit: g
+  - name: sesame oil
+    qty: 10
+    unit: g
+  - name: pear
+    qty: 1
+    unit: item
+  - name: red cabbage
+    qty: 100
+    unit: g
+  - name: red onion
+    qty: 50
+    unit: g
+  - name: cilantro
+    qty: 10
+    unit: g
+  - name: sugar
+    qty: 4
+    unit: g
+  - name: white sesame
+    qty: 3
+    unit: g
+  - name: sweet and sour sauce
+    qty: 60
+    unit: g
+  - name: ckicken thighs marinated in paprika
+    qty: 360
+    unit: g
+
+preparations: |
+  what to do before dish cooking (untifreeze, pickling)
+  second example
+
+recipe: |
+  human reading recipe
+  that just tells how to prepare
+  the dish
+
