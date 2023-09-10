@@ -62,11 +62,11 @@ if __name__ == "__main__":
             if recipe_data["name"] in recipe_names:
                 print(f"WARN: duplicate recipe_names: {recipe_data['name']}")
                 continue
-            print(f"DEBUG: adding {recipe_data['name']} into resulting list of recipe names")
             if args.recipe_names and recipe_data["name"] not in args.recipe_names.split(","):
                 print(f"INFO: skipping {recipe_data['name']} because it is not"
                       " specified in --recipes flag")
                 continue
+            print(f"DEBUG: adding {recipe_data['name']} into resulting list of recipe names")
             recipe_names.add(recipe_data["name"])
             yield recipe_data
 
