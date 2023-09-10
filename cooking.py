@@ -39,6 +39,10 @@ parser.add_argument('--list', '-l',
                     action  = "store_true",
                     help    = "only list recipe names",
                     dest    = "do_list_recipes")
+parser.add_argument('--ingredients', '-i',
+                    action  = "store_true",
+                    help    = "output resulting ingredients list",
+                    dest    = "do_output_ingredients")
 
 args = parser.parse_args()
 if args.recipe_names:
@@ -82,15 +86,15 @@ if __name__ == "__main__":
             if 'ingredients' not in recipe:
                 print(f"WARN: recipe does not contain ingredients")
                 continue
-            print(f"DEBUG: processing recipe ingredients")
+            print(f"DEBUG: processing recipe '{recipe['name']}' ingredients")
             pp.pprint(recipe['ingredients'])
             for ingredient in recipe['ingredients']:
                 if 'name' not in ingredient:
-                    print(f"WARN: ingredient does not contain name")
+                    print(f"WARN: ingredient {ingredient!s} does not contain name")
                 if 'qty' not in ingredient:
-                    print(f"WARN: ingredient does not contain qty")
+                    print(f"WARN: ingredient {ingredient!s} does not contain qty")
                 if 'unit' not in ingredient:
-                    print(f"WARN: ingredient does not contain unit")
+                    print(f"WARN: ingredient {ingredient!s} does not contain unit")
 
                 ingredients[ingredient['name']][ingredient['unit']] += ingredient['qty']
         pp.pprint({k: dict(val) for k, val in ingredients.items()})
